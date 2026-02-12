@@ -152,7 +152,3 @@ function ProjectCard({ project, index, inView }: { project: Project, index: numb
     </motion.div>
   )
 }
-    </motion.div>
-  )
-}
-
