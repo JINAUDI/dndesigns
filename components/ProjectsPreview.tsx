@@ -1,41 +1,82 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ScrollReveal } from './Scroll'
 
-const projects = [
-  {
-    slug: 'luxury-residence-mumbai',
-    title: 'Luxury Residence, Mumbai',
-    category: 'Residential',
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    slug: 'modern-office-delhi',
-    title: 'Modern Office Space, Delhi',
-    category: 'Commercial',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    slug: 'boutique-hotel-goa',
-    title: 'Boutique Hotel, Goa',
-    category: 'Hotels',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    slug: 'fine-dining-restaurant',
-    title: 'Fine Dining Restaurant',
-    category: 'Restaurant & Bar',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-  },
-]
+interface Project {
+  slug: string
+  title: string
+  category: string
+  subCategory?: string
+  image: string
+}
+
+interface DynamicImage {
+  id: string
+  src: string
+  category: string
+  subCategory: string
+  fileName: string
+}
+
+// Helper to format filename to title
+const formatTitle = (name: string) => {
+  return name
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
 
 export default function ProjectsPreview() {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch projects from folder system
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch('/api/projects?samples=false')
+        if (!response.ok) return
+        const data = await response.json()
+        
+        if (data.images && data.images.length > 0) {
+          // Convert to project format and take first 4 for homepage preview
+          const dynamicProjects: Project[] = data.images.map((img: DynamicImage) => ({
+            slug: img.id,
+            title: formatTitle(img.fileName),
+            category: img.category,
+            subCategory: img.subCategory,
+            image: img.src,
+          }))
+          
+          // Show up to 4 projects on homepage (mix of residential and commercial)
+          const residential = dynamicProjects.filter(p => p.category === 'Residential')
+          const commercial = dynamicProjects.filter(p => p.category === 'Commercial')
+          
+          // Alternate between categories for variety
+          const featured: Project[] = []
+          const maxCount = 4
+          for (let i = 0; featured.length < maxCount; i++) {
+            if (residential[i]) featured.push(residential[i])
+            if (featured.length < maxCount && commercial[i]) featured.push(commercial[i])
+            if (!residential[i] && !commercial[i]) break
+          }
+          
+          setProjects(featured.slice(0, 4))
+        }
+      } catch (error) {
+        console.log('Error loading projects')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   return (
     <section className="py-20 lg:py-32 bg-white">
@@ -57,17 +98,27 @@ export default function ProjectsPreview() {
           </ScrollReveal>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.slug} project={project} index={index} inView={inView} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto"></div>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500">Add images to the projects folder to display them here.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {projects.map((project, index) => (
+              <ProjectCard key={project.slug} project={project} index={index} inView={inView} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
 }
 
-function ProjectCard({ project, index, inView }: { project: typeof projects[0], index: number, inView: boolean }) {
+function ProjectCard({ project, index, inView }: { project: Project, index: number, inView: boolean }) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
@@ -79,7 +130,7 @@ function ProjectCard({ project, index, inView }: { project: typeof projects[0], 
       onMouseLeave={() => setIsHovered(false)}
       className="group cursor-pointer"
     >
-      <Link href={`/projects/${project.slug}`}>
+      <Link href="/projects">
         <div className="relative h-96 overflow-hidden bg-gray-100">
           <Image
             src={project.image}
@@ -93,11 +144,14 @@ function ProjectCard({ project, index, inView }: { project: typeof projects[0], 
             isHovered ? 'opacity-40' : 'opacity-0'
           }`} />
           <div className="absolute bottom-0 left-0 right-0 p-8 text-white transform transition-transform duration-300">
-            <div className="text-sm uppercase tracking-wider mb-2 opacity-90">{project.category}</div>
+            <div className="text-sm uppercase tracking-wider mb-2 opacity-90">{project.category}{project.subCategory ? ` • ${project.subCategory}` : ''}</div>
             <h3 className="text-2xl font-semibold">{project.title}</h3>
           </div>
         </div>
       </Link>
+    </motion.div>
+  )
+}
     </motion.div>
   )
 }
