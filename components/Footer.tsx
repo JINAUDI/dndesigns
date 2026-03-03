@@ -101,10 +101,21 @@ export default function Footer() {
             <p className="text-gray-400 text-sm mb-4">
               Receive curated insights on emerging design trends, exclusive project unveilings, and thought leadership from our atelier
             </p>
-            <form className="flex gap-2">
+            <form className="flex gap-2" onSubmit={(e) => {
+              e.preventDefault()
+              const emailInput = e.currentTarget.querySelector('input') as HTMLInputElement
+              const email = emailInput?.value
+              if (email) {
+                const whatsappNumber = '917073620688'
+                const text = `*New Newsletter Subscription*%0A%0A*Email:* ${email}`
+                window.open(`https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${text}`, '_blank')
+                emailInput.value = ''
+              }
+            }}>
               <input
                 type="email"
                 placeholder="Enter your email"
+                required
                 className="flex-1 bg-gray-900 text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white"
                 aria-label="Email address"
               />

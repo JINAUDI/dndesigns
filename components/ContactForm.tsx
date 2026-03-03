@@ -18,12 +18,20 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      alert('Thank you for your gracious enquiry. Our design consultants will be in touch with you shortly.')
-      setFormData({ name: '', email: '', phone: '', projectType: '', message: '' })
-    }, 1000)
+
+    const whatsappNumber = '917073620688'
+    const text = `*New Enquiry from DND Website*%0A%0A` +
+      `*Name:* ${formData.name}%0A` +
+      `*Email:* ${formData.email}%0A` +
+      `*Phone:* ${formData.phone || 'Not provided'}%0A` +
+      `*Project Type:* ${formData.projectType || 'Not specified'}%0A` +
+      `*Message:* ${formData.message}`
+
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${text}`
+    window.open(whatsappUrl, '_blank')
+
+    setIsSubmitting(false)
+    setFormData({ name: '', email: '', phone: '', projectType: '', message: '' })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

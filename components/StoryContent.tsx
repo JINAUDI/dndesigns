@@ -44,13 +44,14 @@ export default function StoryContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative h-96 lg:h-[500px] mb-16"
+            className="relative mb-16 overflow-hidden"
           >
             <Image
-              src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+              src="/our-story.jpg"
               alt="DND Design Team"
-              fill
-              className="object-cover"
+              width={1200}
+              height={900}
+              className="w-full h-auto object-contain"
             />
           </motion.div>
 
